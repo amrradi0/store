@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import { loginUser } from '../Redux/appSlice'
 import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outline'
 
 function Signin() {
@@ -13,6 +15,36 @@ function Signin() {
   })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  
+  const navigate = useNavigate()
+  const location = useLocation()
+  const dispatch = useDispatch()
+  
+
+  const returnUrl = location.state?.returnUrl || '/'
+  const cartItems = location.state?.cartItems || []
+  const totalPrice = location.state?.totalPrice || 0
+  const stateMessage = location.state?.message || ''
+  
+  useEffect(() => {
+    if (stateMessage) {
+      setMessage(stateMessage)
+    }
+    
+
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
+    if (isAuthenticated) {
+      const savedUser = localStorage.getItem('user')
+      if (savedUser) {
+        const user = JSON.parse(savedUser)
+        setMessage(`Welcome back, ${user.name}! Redirecting...`)
+        setTimeout(() => {
+          navigate(returnUrl)
+        }, 1500)
+      }
+    }
+  }, [stateMessage, navigate, returnUrl])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -20,7 +52,7 @@ function Signin() {
       ...prev,
       [name]: value
     }))
-    // Clear error when user starts typing
+    
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -63,11 +95,40 @@ function Signin() {
     
     setIsLoading(true)
     
-    // Simulate API call
+
     setTimeout(() => {
       setIsLoading(false)
-      console.log('Form submitted:', formData)
-      // Here you would typically handle the authentication
+      
+
+      const user = {
+        id: Date.now(),
+        name: formData.name || 'User',
+        email: formData.email,
+        createdAt: new Date().toISOString()
+      }
+      
+
+      dispatch(loginUser(user))
+      
+
+      setMessage(`Welcome ${isLogin ? 'back' : 'to ShopEase'}!`)
+      
+
+      setTimeout(() => {
+        if (returnUrl === '/checkout' && cartItems.length > 0) {
+
+          navigate('/checkout', {
+            state: {
+              cartItems: cartItems,
+              totalPrice: totalPrice
+            }
+          })
+        } else {
+
+          navigate(returnUrl)
+        }
+      }, 1500)
+      
     }, 2000)
   }
 
@@ -85,7 +146,7 @@ function Signin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
-        {/* Header */}
+
         <div className="text-center mb-8">
           <Link to="/" className="inline-block mb-6">
             <div className="text-3xl font-bold text-blue-600">🛒 ShopEase</div>
@@ -99,12 +160,35 @@ function Signin() {
               : 'Join us and start your shopping journey'
             }
           </p>
+          
+
+          {message && (
+            <div className={`mt-4 p-3 rounded-lg ${
+              message.includes('Welcome') 
+                ? 'bg-green-100 text-green-700 border border-green-200' 
+                : 'bg-blue-100 text-blue-700 border border-blue-200'
+            }`}>
+              {message}
+            </div>
+          )}
+          
+
+          {cartItems.length > 0 && (
+            <div className="mt-4 p-4 bg-orange-100 border border-orange-200 rounded-lg">
+              <p className="text-orange-800 text-sm font-medium">
+                🛒 You have {cartItems.length} item{cartItems.length > 1 ? 's' : ''} in your cart (${totalPrice.toFixed(2)})
+              </p>
+              <p className="text-orange-700 text-xs mt-1">
+                Complete sign-in to proceed with checkout
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Form */}
+
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name Field (Register only) */}
+
             {!isLogin && (
               <div className="space-y-2">
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -132,7 +216,7 @@ function Signin() {
               </div>
             )}
 
-            {/* Email Field */}
+
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email Address
@@ -158,7 +242,7 @@ function Signin() {
               )}
             </div>
 
-            {/* Password Field */}
+
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
@@ -195,7 +279,7 @@ function Signin() {
               )}
             </div>
 
-            {/* Confirm Password Field (Register only) */}
+
             {!isLogin && (
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
@@ -223,7 +307,7 @@ function Signin() {
               </div>
             )}
 
-            {/* Remember Me & Forgot Password (Login only) */}
+
             {isLogin && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -243,7 +327,7 @@ function Signin() {
               </div>
             )}
 
-            {/* Submit Button */}
+
             <button
               type="submit"
               disabled={isLoading}
@@ -262,7 +346,7 @@ function Signin() {
             </button>
           </form>
 
-          {/* Divider */}
+
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -274,7 +358,7 @@ function Signin() {
             </div>
           </div>
 
-          {/* Social Login */}
+
           <div className="mt-6 grid grid-cols-2 gap-3">
             <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
               <span className="text-lg mr-2">🐄</span>
@@ -286,7 +370,7 @@ function Signin() {
             </button>
           </div>
 
-          {/* Toggle Auth Mode */}
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -301,7 +385,7 @@ function Signin() {
           </div>
         </div>
 
-        {/* Back to Home */}
+
         <div className="text-center mt-6">
           <Link 
             to="/"
